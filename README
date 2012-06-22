@@ -1,0 +1,24 @@
+MSWinPrint.py -- Windows Printing Subsystem
+Copyright (c) 2004-2006 Chris Gonnerman
+All Rights Reserved
+See the LICENSE file for more information.
+
+------------------------------------------------------------------------------
+
+MSWinPrint.py defines a class and utility functions for use by programs 
+needing to print complex output on Windows 2K/XP hosts.
+
+document is a class for creating and running print jobs.  Presently, the 
+source is the only documentation for this class.
+
+listprinters() returns a list of printer names.  The default printer is the 
+first element of the list, and all other printers follow in alphabetical order.
+
+desc(printer) returns a dictionary containing the descriptive fields
+for the named printer.  
+
+getfont(name, size) returns a win32ui font object for the named
+font scaled to the given size.  Font substitution may have been
+done by Windows, so don't be surprised if you don't get what you
+asked for.
+

@@ -1,0 +1,124 @@
+Title: Windows Printing Via Python
+
+<p>
+<b>Revised October 5, 2006</b>
+
+<p>
+<b>Note: The following instructions are supplied without warranty.  If you use
+them, you are accepting responsiblity for anything that might go wrong.</b>  Also note
+that the instructions below have been tested on Python 2.4 on Windows XP only (using
+pywin32 build 205 and later).
+
+<hr>
+
+<p>
+So you want to produce some output?  On the surface it sounds pretty simple:
+
+<pre>
+# create a dc (Device Context) object (actually a PyCDC)
+dc = win32ui.CreateDC()
+
+# convert the dc into a &quot;printer dc&quot;
+
+# leave out the printername to get the default printer automatically
+dc.CreatePrinterDC(printername)
+
+# you need to set the map mode mainly so you know how
+# to scale your output.  I do everything in points, so setting 
+# the map mode as "twips" works for me.
+dc.SetMapMode(win32con.MM_TWIPS) # 1440 per inch
+
+# here's that scaling I mentioned:
+scale_factor = 20 # i.e. 20 twips to the point
+
+# start the document.  the description variable is a string
+# which will appear in the print queue to identify the job.
+dc.StartDoc(description)
+
+# to draw anything (other than text) you need a pen.
+# the variables are pen style, pen width and pen color.
+pen = win32ui.CreatePen(0, int(scale_factor), 0L)
+
+# SelectObject is used to apply a pen or font object to a dc.
+dc.SelectObject(pen)
+
+# how about a font?  Lucida Console 10 point.
+# I'm unsure how to tell if this failed.
+font = win32ui.CreateFont({
+    &quot;name&quot;: &quot;Lucida Console&quot;,
+    &quot;height&quot;: int(scale_factor * 10),
+    &quot;weight&quot;: 400,
+})
+
+# again with the SelectObject call.
+dc.SelectObject(font)
+
+# okay, now let's print something.
+# TextOut takes x, y, and text values.
+# the map mode determines whether y increases in an
+# upward or downward direction; in MM_TWIPS mode, it
+# advances up, so negative numbers are required to 
+# go down the page.  If anyone knows why this is a
+# "good idea" please email me; as far as I'm concerned
+# it's garbage.
+dc.TextOut(scale_factor * 72,
+    -1 * scale_factor * 72,
+    &quot;Testing...&quot;)
+
+# for completeness, I'll draw a line.
+# from x = 1&quot;, y = 1&quot;
+dc.MoveTo((scale_factor * 72, scale_factor * -72))
+# to x = 6&quot;, y = 3&quot;
+dc.LineTo((scale_factor * 6 * 72, scale_factor * 3 * -72))
+
+# must not forget to tell Windows we're done.
+dc.EndDoc()
+</pre>
+
+<p>
+So far, so good.  Doing it this way gives you decent output, but you can't change the paper size or orientation (or a bunch of other things).
+
+<p>
+It turns out that both win32ui and win32<b>g</b>ui have a CreateDC function, but they are NOT equivalent.  win32ui.CreateDC gives you a PyCDC object (wrapping an hDC and various methods for manipulating it), but win32gui.CreateDC gives you an integer hDC value.  BUT... win32ui.CreateDC doesn't allow you full access to configure the hDC (or if it does, I couldn't figure out how to use it).  So you can't make those changes you'd like to make if you get the DC the way I did above.
+
+<p>
+SO... here's another version.  This is just the beginning of the text above; the whole procedure involves opening the printer, configuring it, getting an integer hDC for the configured printer, and making a PyCDC out of it:
+
+<p>
+<pre>
+# if you just want to use the default printer, you need
+# to retrieve its name.
+printer = win32print.GetDefaultPrinter()
+
+# open the printer.
+hprinter = win32print.OpenPrinter(printer)
+
+# retrieve default settings.  this code does not work on
+# win95/98, as GetPrinter does not accept two 
+devmode = win32print.GetPrinter(hprinter, 2)[&quot;pDevMode&quot;]
+
+# change paper size and orientation
+# constants are available here:
+# http://msdn.microsoft.com/library/default.asp?url=/library/en-us/intl/nls_Paper_Sizes.asp
+# number 10 envelope is 20
+devmode.PaperSize = 20
+# 1 = portrait, 2 = landscape
+devmode.Orientation = 2
+
+# create dc using new settings.
+# first get the integer hDC value.  note that we need the name.
+hdc = win32gui.CreateDC(&quot;WINSPOOL&quot;, printer, devmode)
+# next create a PyCDC from the hDC.
+dc = win32ui.CreateDCFromHandle(hdc)
+
+# now you can set the map mode, etc. and actually print.
+</pre>
+
+<hr>
+
+<p>
+Hopefully this helps someone else.  If this page has been of any use to you at all, please drop me an email:
+
+<p>
+<a href='mailto:chris@newcenturycomputers.net'>chris@newcenturycomputers.net</a>
+
