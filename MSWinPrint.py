@@ -1,5 +1,5 @@
 # MSWinPrint.py
-# Copyright (c) 2004-2009 Chris Gonnerman
+# Copyright (c) 2004-2012 Chris Gonnerman
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without 
