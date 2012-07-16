@@ -25,7 +25,7 @@
 """MSWinPrint -- Windows Printing Subsystem
 
 MSWinPrint defines a class for use by programs needing to print complex
-output on Windows 9x/2K/XP hosts.
+output on Windows 2K/XP/2003 hosts.
 
 document is a class for creating and running print jobs.
 
