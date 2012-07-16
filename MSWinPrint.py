@@ -50,7 +50,6 @@ LOGPIXELSY = 90
 PHYSICALWIDTH = 110
 PHYSICALHEIGHT = 111
 
-
 import win32gui, win32ui, win32print, win32con
 
 try:
@@ -77,6 +76,7 @@ paper_sizes = {
     "envelope11":  21,
     "envelope12":  22,
     "envelope14":  23,
+    "fanfold":     39,
 }
 
 orientations = {
@@ -84,15 +84,23 @@ orientations = {
     "landscape":    2,
 }
 
+duplexes = {
+    "normal":       1,
+    "none":         1,
+    "long":         2,
+    "short":        3,
+}
+
 class document:
 
-    def __init__(self, printer = None, papersize = None, orientation = None):
+    def __init__(self, printer = None, papersize = None, orientation = None, duplex = None):
         self.dc = None
         self.font = None
         self.printer = printer
         self.papersize = papersize
         self.orientation = orientation
         self.page = 0
+        self.duplex = duplex
 
     def scalepos(self, pos):
         rc = []
@@ -121,6 +129,8 @@ class document:
                 devmode.PaperSize = paper_sizes[self.papersize]
         if self.orientation is not None:
             devmode.Orientation = orientations[self.orientation]
+        if self.duplex is not None:
+            devmode.Duplex = duplexes[self.duplex]
 
         # create dc using new settings
         self.hdc = win32gui.CreateDC("WINSPOOL", self.printer, devmode)
