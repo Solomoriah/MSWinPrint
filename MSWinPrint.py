@@ -1,16 +1,16 @@
 # MSWinPrint.py
-# Copyright (c) 2004-2012 Chris Gonnerman
+# Copyright (c) 2004-2017 Chris Gonnerman
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # Redistributions of source code must retain the above copyright notice, this
 # list of conditions and the following disclaimer.  Redistributions in binary
 # form must reproduce the above copyright notice, this list of conditions and
 # the following disclaimer in the documentation and/or other materials
 # provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
 # ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -29,16 +29,15 @@ output on Windows 2K/XP/2003 hosts.
 
 document is a class for creating and running print jobs.
 
-listprinters() returns a list of printer names.  The default printer is the 
+listprinters() returns a list of printer names.  The default printer is the
 first element of the list, and all other printers follow in alphabetical order.
 
 desc(printer) returns a dictionary containing the descriptive fields
-for the named printer.  
+for the named printer. 
 
-getfont(name, size) returns a win32ui font object for the named
-font scaled to the given size.  Font substitution may have been
-done by Windows, so don't be surprised if you don't get what you
-asked for.
+getfont(name, size, weight, italic = 0) returns a win32ui font object for the
+named font scaled to the given size.  Font substitution may have been done by
+Windows, so don't be surprised if you don't get what you asked for.
 """
 
 # "constants" for use with printer setup calls
@@ -144,6 +143,7 @@ class document:
 
         self.dc.SetMapMode(win32con.MM_TWIPS) # hundredths of inches
         self.dc.StartDoc(desc)
+        self.dc.SetBkMode(win32con.TRANSPARENT)
         self.pen = win32ui.CreatePen(0, int(scale_factor), 0L)
         self.dc.SelectObject(self.pen)
         self.page = 1
@@ -157,6 +157,8 @@ class document:
     def end_page(self):
         if self.page == 0:
             return # nothing on the page
+        # endpage gets stupid if the page is completely blank
+        self.text((1, 1), " ")
         self.dc.EndPage()
         self.page += 1
 
@@ -186,16 +188,20 @@ class document:
     def text(self, position, text):
         if self.page == 0:
             self.begin_document()
-        self.dc.TextOut(scale_factor * position[0],
-            -1 * scale_factor * position[1], text)
+        self.dc.TextOut(int(scale_factor * position[0]),
+            int(-1 * scale_factor * position[1]), text)
 
-    def setfont(self, name, size, bold = None):
+    def setfont(self, name, size, bold = None, italic = None):
         if self.page == 0:
             self.begin_document()
         wt = 400
         if bold:
             wt = 700
-        self.font = getfont(name, size, wt)
+        if italic:
+            italic = 1
+        else:
+            italic = 0
+        self.font = getfont(name, size, wt, italic)
         self.dc.SelectObject(self.font)
 
     def image(self, position, image, size):
@@ -206,9 +212,9 @@ class document:
             self.begin_document()
         dib = ImageWin.Dib(image)
         endpos = (position[0] + size[0], position[1] + size[1])
-        dest = (position[0] * scale_factor, 
+        dest = (position[0] * scale_factor,
                -1 * position[1] * scale_factor,
-               endpos[0] * scale_factor, 
+               endpos[0] * scale_factor,
                -1 * endpos[1] * scale_factor)
         dib.draw(self.hdc, dest)
 
@@ -247,12 +253,20 @@ def desc(name):
         listprinters()
     return prdict[name]
 
-def getfont(name, size, weight = 400):
-    return win32ui.CreateFont({
-        "name": name,
-        "height": scale_factor * size,
-        "weight": weight,
-    })
+def getfont(name, size, weight = 400, italic = 0):
+    if italic:
+        return win32ui.CreateFont({
+            "name": name,
+            "height": scale_factor * size,
+            "weight": weight,
+            "italic": italic,
+        })
+    else:
+        return win32ui.CreateFont({
+            "name": name,
+            "height": scale_factor * size,
+            "weight": weight,
+        })
 
 
 if __name__ == "__main__":
