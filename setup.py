@@ -29,7 +29,7 @@ https://github.com/Solomoriah/MSWinPrint
 
 setup(
     name = "MSWinPrint",
-    version = "1.1",
+    version = "1.2",
     description = "MSWinPrint",
     long_description = longdesc,
     author = "Chris Gonnerman",
