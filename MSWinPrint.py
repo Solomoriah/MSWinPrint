@@ -1,5 +1,5 @@
 # MSWinPrint.py
-# Copyright (c) 2004-2017 Chris Gonnerman
+# Copyright (c) 2004-2018 Chris Gonnerman
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ LOGPIXELSY = 90
 PHYSICALWIDTH = 110
 PHYSICALHEIGHT = 111
 
-import win32gui, win32ui, win32print, win32con
+import win32gui, win32ui, win32print, win32con, win32api
 
 try:
     from PIL import ImageWin
@@ -146,6 +146,7 @@ class document:
         self.dc.SetBkMode(win32con.TRANSPARENT)
         self.pen = win32ui.CreatePen(0, int(scale_factor), 0L)
         self.dc.SelectObject(self.pen)
+        win32gui.SetBkMode(self.hdc, 1) # transparent
         self.page = 1
 
     def end_document(self):
@@ -219,7 +220,7 @@ class document:
         dib.draw(self.hdc, dest)
 
     def setink(self, ink):
-        pass
+        win32gui.SetTextColor(self.hdc, win32api.RGB(*ink))
 
     def setfill(self, onoff):
         pass
